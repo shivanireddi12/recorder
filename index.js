@@ -1,76 +1,85 @@
-let video = document.querySelector("video");
 let recordBtnCont = document.querySelector(".record-btn-cont");
 let recordBtn = document.querySelector(".record-btn");
 let captureBtnCont = document.querySelector(".capture-btn-cont");
 let captureBtn = document.querySelector(".capture-btn");
+let voiceBtn = document.querySelector(".voice-btn"); // Voice button element
 let transparentColor = "transparent";
 
 let recordFlag = false;
+let voiceFlag = true; // Start with voice recording on
 
 let recorder;
 let chunks = [];
 
 let constraints = {
-    audio: false,
+    audio: true,
     video: true,
 };
 
 // Create a canvas element for processing video frames
 let canvas = document.createElement('canvas');
 let ctx = canvas.getContext('2d');
+let video = document.getElementById("video");
 
 navigator.mediaDevices.getUserMedia(constraints)
-.then((stream) => {
-    video.srcObject = stream;
-    video.onloadedmetadata = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-    };
+    .then((stream) => {
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        };
 
-    // Create a new MediaStream from the canvas
-    let canvasStream = canvas.captureStream();
+        // Create a new MediaStream from the canvas
+        let canvasStream = canvas.captureStream();
 
-    recorder = new MediaRecorder(canvasStream);
-    recorder.addEventListener("start", (e) => {
-        chunks = [];
-    });
-    recorder.addEventListener("dataavailable", (e) => {
-        chunks.push(e.data);
-    });
-    recorder.addEventListener("stop", (e) => {
-        let blob = new Blob(chunks, { type: "video/mp4" });
-        let videoURL = URL.createObjectURL(blob);
-        let a = document.createElement('a');
-        a.href = videoURL;
-        a.download = "filtered_stream.mp4";
-        a.click();
-    });
+        // Add audio tracks from the original stream to the canvas stream
+        stream.getAudioTracks().forEach(track => {
+            canvasStream.addTrack(track);
+        });
 
-    recordBtnCont.addEventListener("click", (e) => {
-        if (!recorder) return;
+        recorder = new MediaRecorder(canvasStream);
+        recorder.addEventListener("start", (e) => {
+            chunks = [];
+        });
+        recorder.addEventListener("dataavailable", (e) => {
+            chunks.push(e.data);
+        });
+        recorder.addEventListener("stop", (e) => {
+            let blob = new Blob(chunks, {
+                type: "video/mp4"
+            });
+            let videoURL = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = videoURL;
+            a.download = "filtered_stream_with_audio.mp4";
+            a.click();
+        });
 
-        recordFlag = !recordFlag;
-        if (recordFlag) {
-            recorder.start();
-            recordBtn.classList.add("scale-record");
-            startTimer();
-            requestAnimationFrame(drawVideoFrame);
-        } else {
-            recorder.stop();
-            recordBtn.classList.remove("scale-record");
-            stopTimer();
-        }
+        recordBtnCont.addEventListener("click", (e) => {
+            if (!recorder) return;
+
+            recordFlag = !recordFlag;
+            if (recordFlag) {
+                recorder.start();
+                recordBtn.classList.add("scale-record");
+                startTimer();
+                requestAnimationFrame(drawVideoFrame);
+            } else {
+                recorder.stop();
+                recordBtn.classList.remove("scale-record");
+                stopTimer();
+            }
+        });
     });
-});
 
 function drawVideoFrame() {
     if (recordFlag) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // Apply filter
         ctx.fillStyle = transparentColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         requestAnimationFrame(drawVideoFrame);
     }
 }
@@ -79,7 +88,7 @@ captureBtnCont.addEventListener("click", (e) => {
     captureBtnCont.classList.add("scale-capture");
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
+
     // Apply filter to captured image
     ctx.fillStyle = transparentColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -109,47 +118,57 @@ allFilter.forEach((filterElem) => {
 
 // Timer code remains the same
 let timerID;
-let counter = 0;// Represents total seconds
+let counter = 0;
 let timer = document.querySelector(".timer");
-function startTimer(){
+
+function startTimer() {
     timer.style.display = "block";
-    function displayTimer(){
-        /*
-            How to caluculate the time is that
-            1) Initialize a variable that actually stores no.of seconds
-            2) when ever this function displayTimer is called then we need to increment the
-             counter variable , as each call of this function is considered as
-             1sec in regular time. Why? because we need to get the actual time when
-             this thing needs counted.
-            How to count Hours, Minutes & Seconds?
-            counter = 3725
-            we know 1hr = 3600 seconds ,
-            to count 1hr using counter value, we use '/(division operator)' btw 
-            counter and 3600 sec. division operator is used to perform floor divison
-            3725/3600 = >1
-            remainder 3725%3600 =>no.of minutes in seconds , so we need to convert back
-            to minutes, 1minute = 60seconds
-        
-        */
-       let totalSeconds = counter;
-       let hours = Number.parseInt(totalSeconds / 3600);
-       totalSeconds = totalSeconds % 3600;
+
+    function displayTimer() {
+        let totalSeconds = counter;
+        let hours = Number.parseInt(totalSeconds / 3600);
+        totalSeconds = totalSeconds % 3600;
         let minutes = Number.parseInt(totalSeconds / 60);
-        totalSeconds= totalSeconds % 60;
+        totalSeconds = totalSeconds % 60;
         let seconds = totalSeconds;
 
-        hours = (hours < 10) ? `0${hours}`:hours;
+        hours = (hours < 10) ? `0${hours}` : hours;
         minutes = (minutes < 10) ? `0${minutes}` : minutes;
         seconds = (seconds < 10) ? `0${seconds}` : seconds;
 
         timer.innerText = `${hours}:${minutes}:${seconds}`;
-       
+
         counter++;
     }
-    timerID= setInterval(displayTimer,1000);//we are calling this function displayTimer()
+    timerID = setInterval(displayTimer, 1000);
 }
-function stopTimer(){
+
+function stopTimer() {
     clearInterval(timerID);
     timer.innerText = "00:00:00";
-    timer.style.display="none";
+    timer.style.display = "none";
 }
+
+// Voice button functionality
+voiceBtn.classList.add('voice-on'); // Set initial state
+
+voiceBtn.addEventListener("click", () => {
+    voiceFlag = !voiceFlag; // Toggle voiceFlag
+    if (voiceFlag) {
+        // Voice recording on
+        voiceBtn.classList.remove('voice-off');
+        voiceBtn.classList.add('voice-on');
+    } else {
+        // Voice recording off
+        voiceBtn.classList.remove('voice-on');
+        voiceBtn.classList.add('voice-off');
+    }
+
+    // Update audio tracks based on the voiceFlag state
+    let audioTracks = recorder.stream.getAudioTracks();
+    if (audioTracks.length > 0) {
+        audioTracks.forEach(track => {
+            track.enabled = voiceFlag; // Enable/disable audio track
+        });
+    }
+});

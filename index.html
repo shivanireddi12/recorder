@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./style.css">
     <title>Screen Recorder</title>
 </head>
+
 <body>
     <div class="vid-container">
-        <video autoplay controls src=""></video>
+        <video id="video" autoplay controls src=""></video>
     </div>
     <div class="action-cont">
         <div class="record-btn-cont">
@@ -17,6 +19,9 @@
         <div class="capture-btn-cont">
             <div class="capture-btn "></div>
         </div>
+        <div class="voice-btn-cont">
+            <div class="voice-btn">🔊</div> <!-- Voice Button -->
+        </div>
     </div>
 
     <div class="timer-cont">
@@ -24,17 +29,18 @@
     </div>
 
     <div class="filter-cont">
-      <div class="filter orange"></div>
-      <div class="filter brown"></div>
-      <div class="filter pink"></div>
-      <div class="filter transparent"></div>
-      <div class="filter lightblue"></div>
-      <div class="filter red"></div>
-      <div class="filter yellow"></div>
-      <div class="filter lightgreen"></div>
+        <div class="filter orange"></div>
+        <div class="filter brown"></div>
+        <div class="filter pink"></div>
+        <div class="filter transparent"></div>
+        <div class="filter lightblue"></div>
+        <div class="filter red"></div>
+        <div class="filter yellow"></div>
+        <div class="filter lightgreen"></div>
     </div>
 
     <div class="filter-layer"></div>
     <script src="./index.js"></script>
 </body>
+
 </html>
